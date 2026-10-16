@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- ตั้งใน AndroidManifest: <application android:theme="@style/Theme.PSRU" ...> -->
+    <style name="Theme.PSRU" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/psru_primary</item>
+        <item name="colorOnPrimary">@color/psru_on_primary</item>
+        <item name="colorPrimaryContainer">@color/psru_primary_container</item>
+        <item name="colorOnPrimaryContainer">@color/psru_primary</item>
+        <item name="colorSecondary">@color/psru_primary</item>
+        <item name="colorOnSecondary">@color/psru_on_primary</item>
+        <item name="colorSecondaryContainer">@color/psru_primary_container</item>
+        <item name="colorOnSecondaryContainer">@color/psru_ink</item>
+        <item name="colorSurface">@color/psru_surface</item>
+        <item name="colorOnSurface">@color/psru_ink</item>
+        <item name="colorSurfaceVariant">@color/psru_background</item>
+        <item name="colorOnSurfaceVariant">@color/psru_muted</item>
+        <item name="colorOutline">@color/psru_outline</item>
+        <item name="colorError">@color/psru_lost</item>
+        <item name="android:colorBackground">@color/psru_background</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
+        <item name="textInputStyle">@style/Widget.PSRU.TextInput</item>
+    </style>
+
+    <style name="Widget.PSRU.TextInput" parent="Widget.Material3.TextInputLayout.OutlinedBox">
+        <item name="boxCornerRadiusTopStart">12dp</item>
+        <item name="boxCornerRadiusTopEnd">12dp</item>
+        <item name="boxCornerRadiusBottomStart">12dp</item>
+        <item name="boxCornerRadiusBottomEnd">12dp</item>
+        <item name="boxBackgroundColor">@color/psru_surface</item>
+    </style>
+
+    <style name="ShapeAppearanceOverlay.PSRU.Image" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">10dp</item>
+    </style>
+
+    <!-- ตัวอักษร: เว้นบรรทัดเพิ่มเล็กน้อยให้สระ/วรรณยุกต์ภาษาไทยไม่ชิดกัน -->
+    <style name="Text.Headline" parent="">
+        <item name="android:textSize">24sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/psru_ink</item>
+        <item name="android:lineSpacingMultiplier">1.15</item>
+    </style>
+
+    <style name="Text.Title" parent="">
+        <item name="android:textSize">17sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/psru_ink</item>
+        <item name="android:lineSpacingMultiplier">1.15</item>
+    </style>
+
+    <style name="Text.Body" parent="">
+        <item name="android:textSize">15sp</item>
+        <item name="android:textColor">@color/psru_ink</item>
+        <item name="android:lineSpacingMultiplier">1.2</item>
+    </style>
+
+    <style name="Text.Caption" parent="">
+        <item name="android:textSize">13sp</item>
+        <item name="android:textColor">@color/psru_muted</item>
+        <item name="android:lineSpacingMultiplier">1.15</item>
+    </style>
+
+    <style name="Text.Tag" parent="">
+        <item name="android:background">@drawable/bg_tag</item>
+        <item name="android:paddingStart">10dp</item>
+        <item name="android:paddingEnd">10dp</item>
+        <item name="android:paddingTop">2dp</item>
+        <item name="android:paddingBottom">2dp</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+</resources>

@@ -1,6 +1,0 @@
-<resources>
-    <string name="app_name">PSRU Lost &amp; Found</string>
-    <string name="type_lost">ของหาย (Lost)</string>
-    <string name="type_found">พบของ (Found)</string>
-    <string name="btn_submit">บันทึกข้อมูล</string>
-</resources>

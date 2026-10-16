@@ -1,127 +1,245 @@
 package com.example.psrulostfound;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
-import android.widget.Button;
+import android.view.View;
+import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-import androidx.appcompat.app.AppCompatActivity;
-import com.bumptech.glide.Glide;
-import com.google.firebase.firestore.FirebaseFirestore;
 
+import androidx.activity.EdgeToEdge;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.bumptech.glide.Glide;
+import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
+
+/**
+ * Controller หน้ารายละเอียด + ปิดรายการ
+ * รับแค่ documentId แล้วโหลดข้อมูลจาก Firestore (ไม่ส่ง PIN/ข้อมูลผ่าน Intent อีกต่อไป)
+ *
+ * การปิดรายการ:
+ *  - เจ้าของประกาศ  → ยืนยันแล้วปิดได้เลย (เซิร์ฟเวอร์เช็ก uid เอง)
+ *  - คนอื่น          → กรอก PIN; เซิร์ฟเวอร์ตรวจ hash, จำกัดจำนวนครั้ง และล็อกเมื่อกรอกผิดเกินกำหนด
+ */
 public class ItemDetailActivity extends AppCompatActivity {
 
-    private ImageView imgItem;
-    private TextView tvTitle, tvDescription, tvLocation, tvPhone, tvReporterName, tvType;
-    private Button btnClaim;
-    private FirebaseFirestore db;
+    public static final String EXTRA_DOCUMENT_ID = "documentId";
+
+    private PostRepository repo;
     private String documentId;
+    private ItemModel item;
+
+    private View scrollContent, progress, bottomBar;
+    private ImageView imgItem;
+    private TextView tvTypeTag, tvCategory, tvTitle, tvTime, tvDescription, tvLocation,
+            tvReporterName, tvPhone, tvClaimedNote;
+    private MaterialButton btnClaim, btnCall;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        EdgeToEdge.enable(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_item_detail);
+        UiUtil.applySystemBarPadding(findViewById(R.id.root));
 
-        db = FirebaseFirestore.getInstance();
+        repo = new PostRepository();
+        documentId = getIntent().getStringExtra(EXTRA_DOCUMENT_ID);
 
-        // ผูก View
+        ((MaterialToolbar) findViewById(R.id.toolbar)).setNavigationOnClickListener(v -> finish());
+
+        scrollContent = findViewById(R.id.scrollContent);
+        progress = findViewById(R.id.progress);
+        bottomBar = findViewById(R.id.bottomBar);
+        imgItem = findViewById(R.id.imgItem);
+        tvTypeTag = findViewById(R.id.tvTypeTag);
+        tvCategory = findViewById(R.id.tvCategory);
         tvTitle = findViewById(R.id.tvTitle);
+        tvTime = findViewById(R.id.tvTime);
         tvDescription = findViewById(R.id.tvDescription);
         tvLocation = findViewById(R.id.tvLocation);
-        tvPhone = findViewById(R.id.tvPhone);
         tvReporterName = findViewById(R.id.tvReporterName);
-        tvType = findViewById(R.id.tvType);
-        imgItem = findViewById(R.id.imgItem);
+        tvPhone = findViewById(R.id.tvPhone);
+        tvClaimedNote = findViewById(R.id.tvClaimedNote);
         btnClaim = findViewById(R.id.btnClaim);
+        btnCall = findViewById(R.id.btnCall);
 
-        // รับค่าจาก Intent
-        if (getIntent() != null) {
-            documentId = getIntent().getStringExtra("documentId");
-            String title = getIntent().getStringExtra("title");
-            String description = getIntent().getStringExtra("description");
-            String location = getIntent().getStringExtra("location");
-            String phone = getIntent().getStringExtra("phone");
-            String reporterName = getIntent().getStringExtra("reporterName");
-            String type = getIntent().getStringExtra("type");
-            String imageUrl = getIntent().getStringExtra("imageUrl");
-            String postUserId = getIntent().getStringExtra("userId");
-            String correctPin = getIntent().getStringExtra("pin");
+        btnClaim.setOnClickListener(v -> onClaimClicked());
 
-            if (tvTitle != null) tvTitle.setText(title != null ? title : "");
-            if (tvDescription != null) tvDescription.setText(description != null ? description : "");
-            if (tvLocation != null) tvLocation.setText("สถานที่: " + (location != null ? location : "-"));
-            if (tvPhone != null) tvPhone.setText("เบอร์โทร: " + (phone != null ? phone : "-"));
-            if (tvReporterName != null) tvReporterName.setText("ผู้แจ้ง: " + (reporterName != null ? reporterName : "-"));
-            if (tvType != null) tvType.setText(type != null ? type : "");
-
-            if (imgItem != null && imageUrl != null && !imageUrl.isEmpty()) {
-                Glide.with(this).load(imageUrl).into(imgItem);
-            }
+        if (documentId == null || documentId.isEmpty()) {
+            Toast.makeText(this, "ไม่พบรหัสประกาศ", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
         }
-
-        // เมื่อกดปุ่มรับคืนแล้ว
-        if (btnClaim != null) {
-            btnClaim.setOnClickListener(v -> {
-                // ดึง UID ของผู้ใช้งานเครื่องปัจจุบัน
-                String currentUserId = com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser() != null
-                        ? com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser().getUid()
-                        : "";
-
-                // 1. ถ้าเป็นเครื่องเจ้าของโพสต์เดิม (Smart Check) -> อัปเดตสถานะได้ทันที
-                String postUserId = getIntent().getStringExtra("userId");
-                if (currentUserId != null && !currentUserId.isEmpty() && currentUserId.equals(postUserId)) {
-                    updateStatusToClaimed(documentId);
-                } else {
-                    // 2. ถ้าเป็นเครื่องอื่น/ผู้ใช้อื่น -> บังคับแสดง Dialog ให้ใส่ PIN 4 หลัก
-                    String correctPin = getIntent().getStringExtra("pin");
-                    showPinDialogToClaim(documentId, correctPin);
-                }
-            });
-        }
+        loadItem();
     }
-    // ฟังก์ชันสำหรับอัปเดตสถานะเป็น claimed
-    private void updateStatusToClaimed(String docId) {
-        if (docId != null && !docId.isEmpty()) {
-            db.collection("posts").document(docId)
-                    .update("status", "claimed")
-                    .addOnSuccessListener(aVoid -> {
-                        Toast.makeText(ItemDetailActivity.this, "อัปเดตสถานะเรียบร้อยแล้ว", Toast.LENGTH_SHORT).show();
-                        finish();
-                    })
-                    .addOnFailureListener(e -> {
-                        Toast.makeText(ItemDetailActivity.this, "เกิดข้อผิดพลาด: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                    });
+
+    private void loadItem() {
+        progress.setVisibility(View.VISIBLE);
+        repo.ensureSignedIn(
+                () -> repo.getPost(documentId,
+                        loaded -> {
+                            if (isFinishing() || isDestroyed()) return;
+                            item = loaded;
+                            bind(loaded);
+                        },
+                        this::onLoadFailed),
+                this::onLoadFailed);
+    }
+
+    private void onLoadFailed(Exception e) {
+        if (isFinishing() || isDestroyed()) return;
+        Toast.makeText(this, PostRepository.messageOf(e), Toast.LENGTH_LONG).show();
+        finish();
+    }
+
+    private void bind(ItemModel it) {
+        progress.setVisibility(View.GONE);
+        scrollContent.setVisibility(View.VISIBLE);
+        bottomBar.setVisibility(View.VISIBLE);
+
+        UiUtil.bindTag(tvTypeTag, it);
+        tvCategory.setText(it.resolveCategory().getLabel());
+        tvTitle.setText(it.getTitle() != null ? it.getTitle() : "");
+        tvLocation.setText(it.getLocation() != null ? it.getLocation() : "-");
+
+        CharSequence time = UiUtil.relativeTime(it.getCreatedAt());
+        tvTime.setText(time.length() == 0 ? "" : "ลงประกาศ " + time);
+        tvTime.setVisibility(time.length() == 0 ? View.GONE : View.VISIBLE);
+
+        String desc = it.getDescription();
+        tvDescription.setVisibility(desc == null || desc.isEmpty() ? View.GONE : View.VISIBLE);
+        tvDescription.setText(desc != null ? desc : "");
+
+        String reporter = it.getReporterName();
+        tvReporterName.setText(reporter == null || reporter.isEmpty() ? "ไม่ระบุชื่อ" : reporter);
+
+        final String phone = it.getPhone() != null ? it.getPhone() : "";
+        tvPhone.setText(phone.isEmpty() ? "-" : phone);
+        // แสดงปุ่มโทรเฉพาะเมื่อดูเป็นเบอร์โทรจริง (ไม่ใช่ LINE ID)
+        final String dialable = phone.replaceAll("[^0-9+]", "");
+        boolean looksLikePhone = phone.matches("[0-9+\\-\\s()]+") && dialable.length() >= 8;
+        btnCall.setVisibility(looksLikePhone ? View.VISIBLE : View.GONE);
+        btnCall.setOnClickListener(v ->
+                startActivity(new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + dialable))));
+
+        String url = it.getImageUrl();
+        if (url != null && !url.isEmpty()) {
+            Glide.with(this).load(url).centerCrop()
+                    .placeholder(R.drawable.bg_image_placeholder)
+                    .error(R.drawable.bg_image_placeholder)
+                    .into(imgItem);
         } else {
-            Toast.makeText(this, "ไม่พบรหัสเอกสาร (documentId)", Toast.LENGTH_SHORT).show();
+            imgItem.setImageResource(R.drawable.bg_image_placeholder);
+        }
+
+        if (it.claimed()) {
+            btnClaim.setVisibility(View.GONE);
+            tvClaimedNote.setVisibility(View.VISIBLE);
+        } else {
+            btnClaim.setVisibility(View.VISIBLE);
+            tvClaimedNote.setVisibility(View.GONE);
         }
     }
 
-    // ฟังก์ชันแสดง Dialog ให้กรอก PIN 4 หลัก
-    private void showPinDialogToClaim(String docId, String correctPin) {
-        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
-        builder.setTitle("ยืนยัน PIN 4 หลัก");
-        builder.setMessage("กรุณากรอก PIN 4 หลักเพื่อยืนยัน");
+    // ---------------- ปิดรายการ ----------------
 
-        final android.widget.EditText input = new android.widget.EditText(this);
-        input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER | android.text.InputType.TYPE_NUMBER_VARIATION_PASSWORD);
-        builder.setView(input);
+    private boolean isOwner() {
+        String uid = repo.currentUid();
+        return uid != null && item != null && uid.equals(item.getUserId());
+    }
 
-        builder.setPositiveButton("ยืนยัน", (dialog, which) -> {
-            String enteredPin = input.getText().toString().trim();
+    private void onClaimClicked() {
+        if (item == null) return;
+        if (isOwner()) showOwnerConfirmDialog();
+        else showPinDialog();
+    }
 
+    private void showOwnerConfirmDialog() {
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("ปิดรายการนี้?")
+                .setMessage("คุณเป็นเจ้าของประกาศ จึงปิดรายการได้โดยไม่ต้องกรอก PIN")
+                .setPositiveButton("ปิดรายการ", (d, w) -> claim(null, null))
+                .setNegativeButton("ยกเลิก", null)
+                .show();
+    }
 
-            String targetPin = (correctPin != null) ? correctPin.trim() : "";
-            // เพิ่ม Toast เช็กค่าจริงที่ดึงมาจาก Database
-            Toast.makeText(ItemDetailActivity.this, "PIN ในระบบคือ: '" + targetPin + "'", Toast.LENGTH_SHORT).show();
+    private void showPinDialog() {
+        View content = getLayoutInflater().inflate(R.layout.dialog_pin, null);
+        TextInputLayout tilPin = content.findViewById(R.id.tilPin);
+        TextInputEditText etPin = content.findViewById(R.id.etPin);
 
-            if (!enteredPin.isEmpty() && enteredPin.equals(targetPin)) {
-                updateStatusToClaimed(docId);
-            } else {
-                Toast.makeText(ItemDetailActivity.this, "รหัส PIN ไม่ถูกต้อง!", Toast.LENGTH_SHORT).show();
+        AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+                .setTitle("ยืนยันด้วย PIN")
+                .setView(content)
+                // ใส่ listener เป็น null ก่อน แล้วผูกใหม่หลัง show() เพื่อไม่ให้ dialog ปิดเองเมื่อ PIN ผิด
+                .setPositiveButton("ยืนยัน", null)
+                .setNegativeButton("ยกเลิก", null)
+                .create();
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+        }
+        dialog.show();
+        etPin.requestFocus();
+
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            String pin = etPin.getText() != null ? etPin.getText().toString().trim() : "";
+            if (!pin.matches("\\d{4}")) {
+                tilPin.setError("กรุณากรอกตัวเลข 4 หลัก");
+                return;
             }
+            tilPin.setError(null);
+            claim(pin, new ClaimUi(dialog, tilPin));
         });
-        builder.setNegativeButton("ยกเลิก", (dialog, which) -> dialog.cancel());
+    }
 
-        builder.show();
+    /** ตัวช่วยจัดการหน้าตา dialog ระหว่างรอผลจากเซิร์ฟเวอร์ */
+    private static class ClaimUi {
+        final AlertDialog dialog;
+        final TextInputLayout tilPin;
+
+        ClaimUi(AlertDialog dialog, TextInputLayout tilPin) {
+            this.dialog = dialog;
+            this.tilPin = tilPin;
+        }
+
+        void setBusy(boolean busy) {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(!busy);
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setEnabled(!busy);
+            tilPin.setEnabled(!busy);
+        }
+    }
+
+    private void claim(String pin, ClaimUi ui) {
+        if (ui != null) ui.setBusy(true);
+        btnClaim.setEnabled(false);
+
+        repo.claimPost(documentId, pin,
+                () -> {
+                    if (isFinishing() || isDestroyed()) return;
+                    if (ui != null) ui.dialog.dismiss();
+                    Toast.makeText(this, "ปิดรายการเรียบร้อยแล้ว", Toast.LENGTH_SHORT).show();
+                    finish();
+                },
+                e -> {
+                    if (isFinishing() || isDestroyed()) return;
+                    btnClaim.setEnabled(true);
+                    String msg = PostRepository.messageOf(e);
+                    if (ui != null && PostRepository.isInputError(e)) {
+                        // PIN ผิด / ถูกล็อก: เปิด dialog ค้างไว้และแสดงข้อความที่ช่องกรอก
+                        ui.setBusy(false);
+                        ui.tilPin.setError(msg);
+                    } else {
+                        if (ui != null) ui.dialog.dismiss();
+                        Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
+                    }
+                });
     }
 }

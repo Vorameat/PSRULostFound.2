@@ -10,7 +10,7 @@
         android:label="PSRU Lost &amp; Found"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.PSRULostFound">
+        android:theme="@style/Theme.PSRU">
 
         <activity
             android:name=".MainActivity"

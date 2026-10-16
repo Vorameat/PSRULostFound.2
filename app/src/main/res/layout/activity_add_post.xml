@@ -1,115 +1,292 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFFFF"
-    android:padding="16dp">
+    android:background="@color/psru_background"
+    android:orientation="vertical">
 
-    <LinearLayout
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/psru_background"
+        app:navigationContentDescription="ย้อนกลับ"
+        app:navigationIcon="@drawable/ic_arrow_back"
+        app:title="แจ้งประกาศใหม่"
+        app:titleTextColor="@color/psru_ink" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="แจ้งเรื่องของหาย / พบของ"
-            android:textColor="#1D61D2"
-            android:textSize="20sp"
-            android:textStyle="bold" />
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:fillViewport="true">
 
-        <!-- ประเภทเรื่อง -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="ประเภท:"
-            android:textStyle="bold" />
-
-        <Spinner
-            android:id="@+id/spinnerType"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:layout_marginTop="4dp" />
-
-        <!-- ชื่อสิ่งของ -->
-        <EditText
-            android:id="@+id/etTitle"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:hint="ชื่อสิ่งของ (เช่น กระเป๋าสตางค์, กุญแจรถ)"
-            android:inputType="text" />
+            android:orientation="vertical"
+            android:padding="16dp">
 
-        <!-- สถานที่ / ตึกใน มรภ.พิบูลสงคราม -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="สถานที่ / อาคารใน มรภ.พิบูลสงคราม:"
-            android:textStyle="bold" />
+            <!-- 1. ประเภท -->
+            <TextView
+                style="@style/Text.Title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="คุณกำลังแจ้งเรื่องอะไร" />
 
-        <Spinner
-            android:id="@+id/spinnerLocation"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:layout_marginTop="4dp" />
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/toggleType"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                app:singleSelection="true">
 
-        <!-- จุดสังเกตเพิ่มเติม -->
-        <EditText
-            android:id="@+id/etDetail"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:hint="รายละเอียดเพิ่มเติม / จุดสังเกต"
-            android:inputType="textMultiLine"
-            android:minLines="3" />
+                <Button
+                    android:id="@+id/btnTypeLost"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="ของหาย" />
 
-        <!-- ชื่อผู้แจ้งและเบอร์ติดต่อ -->
-        <EditText
-            android:id="@+id/etContactName"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:hint="ชื่อผู้แจ้ง"
-            android:inputType="textPersonName" />
+                <Button
+                    android:id="@+id/btnTypeFound"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="เจอของ" />
+            </com.google.android.material.button.MaterialButtonToggleGroup>
 
-        <EditText
-            android:id="@+id/etContactPhone"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:hint="เบอร์โทรศัพท์ / LINE ID"
-            android:inputType="phone" />
+            <TextView
+                android:id="@+id/tvTypeError"
+                style="@style/Text.Caption"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="กรุณาเลือกประเภท"
+                android:textColor="@color/psru_lost"
+                android:visibility="gone" />
 
-        <!-- ปุ่มแนบรูปภาพ -->
-        <Button
-            android:id="@+id/btnSelectImage"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:backgroundTint="#6C757D"
-            android:text="เลือกรูปภาพสิ่งของ" />
+            <!-- 2. หมวดหมู่ -->
+            <TextView
+                style="@style/Text.Title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="หมวดหมู่ของ" />
 
-        <ImageView
-            android:id="@+id/imgPreview"
-            android:layout_width="match_parent"
-            android:layout_height="180dp"
-            android:layout_marginTop="12dp"
-            android:layout_marginBottom="12dp"
-            android:scaleType="centerCrop"
-            android:adjustViewBounds="true"
-            android:visibility="visible" />
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroupCategory"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                app:singleSelection="true" />
 
-        <!-- ปุ่มบันทึก -->
-        <Button
-            android:id="@+id/btnSubmit"
-            android:layout_width="match_parent"
-            android:layout_height="55dp"
-            android:layout_marginTop="20dp"
-            android:backgroundTint="#1D61D2"
-            android:text="บันทึกข้อมูล"
-            android:textSize="16sp" />
+            <TextView
+                android:id="@+id/tvCategoryError"
+                style="@style/Text.Caption"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="กรุณาเลือกหมวดหมู่"
+                android:textColor="@color/psru_lost"
+                android:visibility="gone" />
 
-    </LinearLayout>
-</ScrollView>
+            <!-- 3. รายละเอียดของ -->
+            <TextView
+                style="@style/Text.Title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="รายละเอียด" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:hint="ชื่อสิ่งของ"
+                app:counterEnabled="true"
+                app:counterMaxLength="80"
+                app:helperText="เช่น กระเป๋าสตางค์สีน้ำตาล, กุญแจรถมีพวงกุญแจหมี">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textCapSentences"
+                    android:maxLength="80" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- สถานที่: เลือกจากรายการ (res/values/locations_psru.xml) -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilLocation"
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:hint="สถานที่ที่ทำหาย / พบของ"
+                app:boxBackgroundColor="@color/psru_surface"
+                app:boxCornerRadiusBottomEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusTopStart="12dp"
+                app:helperText="เลือกอาคารหรือจุดที่ใกล้ที่สุด">
+
+                <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                    android:id="@+id/actLocation"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="none" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- แสดงเมื่อเลือก "อื่นๆ (ระบุเอง)" -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilLocationOther"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:hint="ระบุสถานที่"
+                android:visibility="gone">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etLocationOther"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textCapSentences"
+                    android:maxLength="100" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilDescription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:hint="จุดสังเกต / ชั้น / ห้อง (ไม่บังคับ)">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etDescription"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="top"
+                    android:inputType="textMultiLine|textCapSentences"
+                    android:maxLength="500"
+                    android:minLines="3" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilImageUrl"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:hint="ลิงก์รูปภาพ (ไม่บังคับ)"
+                app:helperText="ต้องขึ้นต้นด้วย https://">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etImageUrl"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textUri"
+                    android:maxLength="500" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- 4. ติดต่อ -->
+            <TextView
+                style="@style/Text.Title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="ช่องทางติดต่อ" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilReporter"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:hint="ชื่อผู้แจ้ง (ไม่บังคับ)">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etReporterName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textPersonName"
+                    android:maxLength="60" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilPhone"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:hint="เบอร์โทร หรือ LINE ID">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etPhone"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="text"
+                    android:maxLength="50" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- 5. PIN -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                app:cardBackgroundColor="@color/psru_primary_container"
+                app:cardCornerRadius="14dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        style="@style/Text.Title"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="PIN สำหรับปิดรายการ" />
+
+                    <TextView
+                        style="@style/Text.Caption"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="ตั้งเลข 4 หลัก แล้วบอกเฉพาะคนที่มารับของจริง คนนั้นจะใช้ PIN นี้ปิดรายการ ส่วนคุณปิดรายการเองได้จากเครื่องที่โพสต์โดยไม่ต้องกรอก PIN\nระบบไม่เก็บ PIN เป็นข้อความ จึงดู PIN ย้อนหลังไม่ได้ กรุณาจำไว้" />
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilPin"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:hint="PIN 4 หลัก"
+                        app:endIconMode="password_toggle">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etPinCode"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:digits="0123456789"
+                            android:imeOptions="actionDone"
+                            android:inputType="numberPassword"
+                            android:maxLength="4" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+        </LinearLayout>
+    </ScrollView>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnSubmit"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_margin="16dp"
+        android:text="ลงประกาศ"
+        android:textSize="16sp" />
+</LinearLayout>

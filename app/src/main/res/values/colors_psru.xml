@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="psru_background">#F2F4F6</color>
+    <color name="psru_surface">#FFFFFF</color>
+    <color name="psru_ink">#16202B</color>
+    <color name="psru_muted">#5B6773</color>
+    <color name="psru_outline">#D3DAE0</color>
+    <color name="psru_primary">#1F3A5F</color>
+    <color name="psru_on_primary">#FFFFFF</color>
+    <color name="psru_primary_container">#DCE6F3</color>
+
+    <!-- สีสื่อความหมาย: ของหาย / เจอของ / ปิดรายการแล้ว -->
+    <color name="psru_lost">#C4352B</color>
+    <color name="psru_lost_container">#FBE3E0</color>
+    <color name="psru_found">#0B7A64</color>
+    <color name="psru_found_container">#D9F0EA</color>
+    <color name="psru_claimed">#7B8794</color>
+    <color name="psru_claimed_container">#E6E9ED</color>
+</resources>
